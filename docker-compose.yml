@@ -1,0 +1,28 @@
+version: "3.9"
+
+networks:
+  db:
+
+volumes:
+  pgdata:
+
+services:
+  db:
+    image: postgres:alpine
+    restart: unless-stopped
+    user: postgres
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - db

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, File, UploadFile, Response
-from utils.file_manager import FileManager
-from utils.exceptions import NotFound
+from fastapi import APIRouter, File, Response, UploadFile
+
 from schemas.file import FilesListRetrieve
+from utils.exceptions import NotFound
+from utils.file_manager import FileManager
 
 router = APIRouter(prefix="/files")
 

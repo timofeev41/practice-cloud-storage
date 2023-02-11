@@ -1,8 +1,10 @@
 import os
-import aiofiles
 import pathlib
+
+import aiofiles
+
+from schemas.file import FileDataRetrieve, FilesListRetrieve
 from utils.enums import FileType
-from schemas.file import FilesListRetrieve, FileDataRetrieve
 
 
 class _FileManager:
