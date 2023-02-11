@@ -19,7 +19,7 @@ async def get_list_of_available_files():
 
 @app.get("/files/{filename}")
 async def download_file(filename: str):
-    file = FileManager.read_file(filename)
+    file = await FileManager.read_file(filename)
     if not file:
         raise NotFound()
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
@@ -28,5 +28,5 @@ async def download_file(filename: str):
 
 @app.post("/files/")
 async def upload_file(file: UploadFile = File(...)):
-    new_file = FileManager.add_file(file.filename, file.file.read())
+    new_file = await FileManager.add_file(file.filename, file.file.read())
     return {"created": new_file}

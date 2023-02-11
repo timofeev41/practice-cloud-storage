@@ -1,3 +1,4 @@
+import aiofiles
 import pathlib
 
 
@@ -9,18 +10,18 @@ class _FileManager:
         if not self.path.exists():
             self.path.mkdir()
 
-    def add_file(self, name: str, data: bytes) -> str:
+    async def add_file(self, name: str, data: bytes) -> str:
         path = self.path.resolve() / name
-        with open(path, "wb") as f:
-            f.write(data)
+        async with aiofiles.open(path, mode='wb') as f:
+            await f.write(data)
         return name
 
-    def read_file(self, name: str) -> bytes | None:
+    async def read_file(self, name: str) -> bytes | None:
         path = self.path.resolve() / name
         if not path.exists():
             return None
-        with open(path, "rb") as f:
-            return f.read()
+        async with aiofiles.open(path, mode='rb') as f:
+            return await f.read()
 
     @staticmethod
     def _normalize_path(path: pathlib.Path) -> str:
