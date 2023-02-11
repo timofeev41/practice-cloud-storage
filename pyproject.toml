@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "filebox-backend"
+version = "0.1.0"
+description = ""
+authors = ["Nikolas <timofeevnik41@gmail.com>"]
+readme = "README.md"
+packages = [{include = "filebox_backend"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.90.0"
+SQLAlchemy = "^2.0.3"
+uvicorn = "^0.20.0"
+python-multipart = "^0.0.5"
+aiofiles = "^23.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
