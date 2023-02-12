@@ -2,9 +2,13 @@ import os
 import pathlib
 
 import aiofiles
+from loguru import logger
+from sqlalchemy import and_, select
 
+from database.models import AsyncSession, File, User
 from schemas.file import FileDataRetrieve, FilesListRetrieve
 from utils.enums import FileType
+from utils.exceptions import NotFound
 
 
 class _FileManager:
@@ -15,18 +19,43 @@ class _FileManager:
         if not self.path.exists():
             self.path.mkdir()
 
-    async def add_file(self, name: str, data: bytes) -> str:
+    async def add_file(self, name: str, data: bytes, user: User, session: AsyncSession) -> str:
         path = self.path.resolve() / name
         async with aiofiles.open(path, mode="wb") as f:
             await f.write(data)
+
+        new_file = File(
+            filename=name,
+            path=str(path),
+            owner=user,
+            deleted=False,
+        )
+        session.add(new_file)
+        await session.flush()
+        await session.commit()
+
         return name
 
-    async def read_file(self, name: str) -> bytes | None:
-        path = self.path.resolve() / name
+    async def read_file(self, id: int, user: User, session: AsyncSession) -> tuple[str, bytes]:
+        file: list[File] = (
+            await session.execute(
+                select(File).where(
+                    and_(
+                        File.owner == user,
+                        File.id == id,
+                        ~File.deleted,
+                    )
+                )
+            )
+        ).fetchone()
+        if not file:
+            raise NotFound()
+        file = file[0]
+        path = pathlib.Path(file.path)
         if not path.exists():
-            return None
+            raise NotFound()
         async with aiofiles.open(path, mode="rb") as f:
-            return await f.read()
+            return (file.filename, await f.read())
 
     @staticmethod
     def _normalize_path(path: pathlib.Path) -> str:
@@ -50,19 +79,25 @@ class _FileManager:
         else:
             return FileType.other
 
-    def list_files(self) -> FilesListRetrieve:
+    async def list_files(self, user: User, session: AsyncSession) -> FilesListRetrieve:
         res = []
-        files = list(self.path.iterdir())
+        files = (await session.execute(select(File).where(File.owner == user))).fetchall()
+        if not files:
+            return FilesListRetrieve(files=[], count=0)
+        files = files[0]
+        logger.info(files)
+        file: File
         for file in files:
-            filename = self._normalize_path(file)
-            stats = os.stat(file)
+            filename = self._normalize_path(file.path)  # type: ignore
+            stats = os.stat(file.path)  # type: ignore
             res.append(
                 FileDataRetrieve(
                     type=self._determine_filetype(filename),
                     size=stats.st_size,
                     ts_created=int(stats.st_atime),
-                    access=["me"],
+                    access=[file.owner_id],  # type: ignore
                     name=filename,
+                    id=file.id,
                 )
             )
         return FilesListRetrieve(files=res, count=len(res))

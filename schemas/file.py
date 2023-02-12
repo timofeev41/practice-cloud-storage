@@ -4,9 +4,10 @@ from utils.enums import FileType
 
 
 class FileDataRetrieve(BaseModel):
+    id: int = Field(..., description="File id")
     type: FileType = FileType.other
     size: int = Field(..., description="File size in bytes")
-    access: list[str] = Field(..., description="Users which may access file")
+    access: list[int] = Field(..., description="Users which may access file")
     name: str = Field(..., description="Filename")
     ts_created: int = Field(..., description="When file was created")
 

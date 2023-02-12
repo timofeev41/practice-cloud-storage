@@ -1,14 +1,6 @@
-import enum
-import os
-from asyncio import current_task
-
-from sqlalchemy import (Boolean, Column, Date, DateTime, Enum, Float,
-                        ForeignKey, Integer, String)
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.asyncio import (AsyncSession, async_scoped_session,
-                                    create_async_engine)
-from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()
@@ -29,6 +21,9 @@ class User(BaseModelWithID):
 
     files = relationship("File", back_populates="owner")
 
+    def __str__(self) -> str:
+        return f"{self.username}"
+
 
 class File(BaseModelWithID):
     __tablename__ = "files"
@@ -37,5 +32,9 @@ class File(BaseModelWithID):
     path = Column(String, unique=True, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
+    ts_created = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="files")
+
+    def __str__(self) -> str:
+        return f"<File: {self.filename} at {self.path}>"

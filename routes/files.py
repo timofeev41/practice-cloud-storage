@@ -1,6 +1,9 @@
-from fastapi import APIRouter, File, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Response, UploadFile
 
+from database.models import User
+from database.session import AsyncSession, get_db
 from schemas.file import FilesListRetrieve
+from utils.auth import get_current_user
 from utils.exceptions import NotFound
 from utils.file_manager import FileManager
 
@@ -8,20 +11,31 @@ router = APIRouter(prefix="/files")
 
 
 @router.get("/")
-async def get_list_of_available_files() -> FilesListRetrieve:
-    return FileManager.list_files()
+async def get_list_of_available_files(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> FilesListRetrieve:
+    return await FileManager.list_files(user, session)
 
 
-@router.get("/{filename}")
-async def download_file(filename: str):
-    file = await FileManager.read_file(filename)
+@router.get("/{id}")
+async def download_file(
+    id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    file = await FileManager.read_file(id, user, session=session)
     if not file:
         raise NotFound()
-    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
-    return Response(file, headers=headers)
+    headers = {"Content-Disposition": f'attachment; filename="{file[0]}"'}
+    return Response(file[1], headers=headers)
 
 
 @router.post("/")
-async def upload_file(file: UploadFile = File(...)):
-    new_file = await FileManager.add_file(file.filename, file.file.read())
+async def upload_file(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    new_file = await FileManager.add_file(file.filename, file.file.read(), user, session=session)
     return {"created": new_file}

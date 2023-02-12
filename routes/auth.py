@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
+from loguru import logger
 from pydantic import BaseModel
 
 from database.models import User
@@ -10,12 +11,15 @@ router = APIRouter(prefix="/auth")
 
 
 class TokenRetrieve(BaseModel):
-    token: str
+    access_token: str
+    token_type: str = "bearer"
 
 
 @router.post("/token")
 async def get_token(user: User = Depends(authenticate_user)) -> TokenRetrieve:
-    return TokenRetrieve(token=create_access_token({"username": user.username}))
+    token = create_access_token({"sub": user.username})
+    logger.info(f"created token {token}")
+    return TokenRetrieve(access_token=token, token_type="bearer")
 
 
 @router.get("/me")
