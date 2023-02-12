@@ -2,9 +2,17 @@ from fastapi import FastAPI
 
 from routes import auth_router, files_router
 
-app = FastAPI()
-app.include_router(files_router)
-app.include_router(auth_router)
+desc = "REST API of Cloud Storage service Filebox"
+
+app = FastAPI(
+    title="Filebox REST API",
+    version="0.1.1beta",
+    description=desc,
+    contact={"author": "Timofeev Nikolay K33402 ISU 307526", "email": "timofeevnik41@gmail.com"},
+    license_info={"name": "License GNU GPL"},
+)
+app.include_router(files_router, tags=["Files Management"])
+app.include_router(auth_router, tags=["User management"])
 
 
 @app.on_event("startup")
@@ -13,5 +21,5 @@ async def start_app():
     from database.session import engine
 
     async with engine.begin() as conn:
-        # await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
