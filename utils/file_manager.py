@@ -20,6 +20,7 @@ class _FileManager:
             self.path.mkdir()
 
     async def add_file(self, name: str, data: bytes, user: User, session: AsyncSession) -> str:
+        name = name.replace(" ", "_").replace("/", "_")
         path = self.path.resolve() / name
         async with aiofiles.open(path, mode="wb") as f:
             await f.write(data)
@@ -81,13 +82,13 @@ class _FileManager:
 
     async def list_files(self, user: User, session: AsyncSession) -> FilesListRetrieve:
         res = []
-        files = (await session.execute(select(File).where(File.owner == user))).fetchall()
+        files = (await session.execute(select(File).where(File.owner == user))).scalars().all()
         if not files:
             return FilesListRetrieve(files=[], count=0)
-        files = files[0]
-        logger.info(files)
+        logger.info([str(_) for _ in files])
         file: File
         for file in files:
+            print(str(file))
             filename = self._normalize_path(file.path)  # type: ignore
             stats = os.stat(file.path)  # type: ignore
             res.append(
@@ -101,6 +102,11 @@ class _FileManager:
                 )
             )
         return FilesListRetrieve(files=res, count=len(res))
+
+    async def check_exists(self, name: str) -> bool:
+        name = name.replace(" ", "_").replace("/", "_")
+        path = self.path.resolve() / name
+        return path.exists()
 
 
 FileManager = _FileManager()

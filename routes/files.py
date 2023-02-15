@@ -4,7 +4,7 @@ from database.models import User
 from database.session import AsyncSession, get_db
 from schemas.file import FilesListRetrieve
 from utils.auth import get_current_user
-from utils.exceptions import NotFound
+from utils.exceptions import FileExists, NotFound
 from utils.file_manager import FileManager
 
 router = APIRouter(prefix="/files")
@@ -37,5 +37,7 @@ async def upload_file(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
+    if await FileManager.check_exists(file.file.name):
+        raise FileExists()
     new_file = await FileManager.add_file(file.filename, file.file.read(), user, session=session)
     return {"created": new_file}

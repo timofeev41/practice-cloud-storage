@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from database.models import User
 from database.session import AsyncSession, get_db
 from schemas.user import NewUser, UserRetrieve
-from utils.auth import authenticate_user, create_access_token, get_current_user
+from utils.auth import (authenticate_user, create_access_token,
+                        get_current_user, get_user_by_username)
+from utils.exceptions import UserExists
 
 router = APIRouter(prefix="/auth")
 
@@ -29,6 +31,9 @@ async def get_my_data(user: User = Depends(get_current_user)) -> UserRetrieve:
 
 @router.post("/register")
 async def create_user(user: NewUser, session: AsyncSession = Depends(get_db)) -> UserRetrieve:
+    if await get_user_by_username(user.username, session=session):
+        raise UserExists()
+
     new_user = User(
         username=user.username,
         password=user.password,

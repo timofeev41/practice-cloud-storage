@@ -34,7 +34,7 @@ async def get_logged_user(user=Depends(authenticate_user)):
 async def get_user_by_username(username: str, session: AsyncSession) -> User:
     try:
         query = select(User).where(User.username == username)
-        user: User = (await session.execute(query)).fetchone()[0]
+        user: User = (await session.execute(query)).scalars().one()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from e
     return user
