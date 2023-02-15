@@ -38,7 +38,11 @@ class _FileManager:
         return name
 
     async def delete_file(self, id: int, user: User, session: AsyncSession) -> None:
-        file: File = (await session.execute(select(File).where(and_(File.id == id, ~File.deleted)))).scalars().one()
+        file: File = (
+            (await session.execute(select(File).where(and_(File.id == id, File.owner == user, ~File.deleted))))
+            .scalars()
+            .one()
+        )
         file.deleted = True
         await session.flush()
         await session.commit()
@@ -88,7 +92,7 @@ class _FileManager:
 
     async def list_files(self, user: User, session: AsyncSession) -> FilesListRetrieve:
         res = []
-        files = (await session.execute(select(File).where(File.owner == user))).scalars().all()
+        files = (await session.execute(select(File).where(and_(File.owner == user, ~File.deleted)))).scalars().all()
         if not files:
             return FilesListRetrieve(files=[], count=0)
         logger.info([str(_) for _ in files])

@@ -47,7 +47,7 @@ async def upload_file(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
-    if await FileManager.check_exists(file.file.name):
+    if await FileManager.check_exists(file.filename):
         raise FileExists()
     new_file = await FileManager.add_file(file.filename, file.file.read(), user, session=session)
     return {"created": new_file}
