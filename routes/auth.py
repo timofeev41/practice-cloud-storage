@@ -5,8 +5,7 @@ from pydantic import BaseModel
 from database.models import User
 from database.session import AsyncSession, get_db
 from schemas.user import NewUser, UserRetrieve
-from utils.auth import (authenticate_user, create_access_token,
-                        get_current_user, get_user_by_username)
+from utils.auth import authenticate_user, create_access_token, get_current_user, get_user_by_username
 from utils.exceptions import UserExists
 
 router = APIRouter(prefix="/auth")

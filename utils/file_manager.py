@@ -37,6 +37,12 @@ class _FileManager:
 
         return name
 
+    async def delete_file(self, id: int, user: User, session: AsyncSession) -> None:
+        file: File = (await session.execute(select(File).where(and_(File.id == id, ~File.deleted)))).scalars().one()
+        file.deleted = True
+        await session.flush()
+        await session.commit()
+
     async def read_file(self, id: int, user: User, session: AsyncSession) -> tuple[str, bytes]:
         file: list[File] = (
             await session.execute(

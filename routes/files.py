@@ -31,6 +31,16 @@ async def download_file(
     return Response(file[1], headers=headers)
 
 
+@router.delete("/{id}")
+async def delete_file(
+    id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    await FileManager.delete_file(id, user, session=session)
+    return {"removed": "ok"}
+
+
 @router.post("/")
 async def upload_file(
     file: UploadFile = File(...),
